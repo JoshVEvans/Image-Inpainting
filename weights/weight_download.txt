@@ -1,0 +1,2 @@
+Due to the large size of this model, the weights will not be available on github. Instead, download the weights from this google drive folder:
+https://drive.google.com/drive/folders/1ayWNAUVGlKtSNP_2S0CQGosylE9tPBFj?usp=sharing

@@ -8,13 +8,15 @@ def evaluate(model, concat=True, summary=True):
         model.summary()
 
     dir_original = "evaluation/original/"
+    dir_input = "evaluation/input/"
     dir_output = "evaluation/output/"
 
-    image_names = os.listdir(dir_original)
+    image_names = os.listdir(dir_input)
 
     for image_name in image_names:
         # Read in and format original image
-        image = cv2.imread(f"{dir_original}{image_name}")
+        original = cv2.imread(f"{dir_original}{image_name}")
+        image = cv2.imread(f"{dir_input}{image_name}")
         input = image
         dim = image.shape
 
@@ -25,13 +27,18 @@ def evaluate(model, concat=True, summary=True):
         output = np.array(model(image)[0])
         output = output * 255
 
+        # White Strip
+        white = np.full(
+            shape=(output.shape[0], output.shape[1] // 50, 3), fill_value=255
+        )
+
         # Write Output
         cv2.imwrite(f"{dir_output}{image_name}", output)
 
         if concat:
             cv2.imwrite(
                 f"evaluation/Combined/{image_name}",
-                np.concatenate((input, output), axis=1),
+                np.concatenate((original, white, input, white, output), axis=1),
             )
 
 
