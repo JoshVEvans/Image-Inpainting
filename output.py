@@ -1,13 +1,9 @@
 import os
-
-from keras.models import load_model
-
-import numpy as np
-import gc
 import cv2
+import numpy as np
 
 
-def evaluate(model, scale=2, concat=True, summary=True):
+def evaluate(model, concat=True, summary=True):
     if summary:
         model.summary()
 
@@ -39,46 +35,9 @@ def evaluate(model, scale=2, concat=True, summary=True):
             )
 
 
-def inference(model, scale=2, summary=True):
-    if summary:
-        model.summary()
-
-    dir_original = "inference/original/"
-    dir_output = "inference/upscaled/"
-
-    image_names = os.listdir(dir_original)
-
-    for image_name in image_names:
-        # Read in and format original image
-        image = cv2.imread(f"{dir_original}{image_name}") / 255
-
-        # Upscale image
-        dim = image.shape
-        image = cv2.resize(
-            image, (dim[1] * scale, dim[0] * scale), interpolation=cv2.INTER_CUBIC
-        )
-        dim = image.shape
-        image = np.reshape(image, (1, *dim))
-
-        # Get Output
-        output = np.array(model(image)[0]) * 255
-
-        # Write Output
-        cv2.imwrite(f"{dir_output}{image_name}", output)
-
-
-def loss(y_true, y_pred):
-    alpha = 0.84
-    ssim = 1 - tf.reduce_mean(tf.image.ssim(y_true, y_pred, 1))
-    l1 = abs(y_true - y_pred)
-
-    loss = alpha * ssim + (1 - alpha) * l1
-
-    return loss
-
-
 if __name__ == "__main__":
     import tensorflow as tf
+    from keras.models import load_model
 
     # If uncommented, forces the use of the cpu or gpu
     # os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
@@ -93,5 +52,5 @@ if __name__ == "__main__":
     session = tf.compat.v1.Session(config=config)
     tf.compat.v1.keras.backend.set_session(session)
 
-    model = load_model("weights/weights.h5", custom_objects={"loss": loss})
+    model = load_model("weights/weights.h5")
     evaluate(model)
