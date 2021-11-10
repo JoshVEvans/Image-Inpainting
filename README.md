@@ -9,39 +9,25 @@ To see a higher quality version, **[click](https://github.com/JoshVEvans/Super-R
 ![alt text](evaluation/Combined/000000001300.jpg)
 
 ## Reasearch and Development
-How did I get to my final model architecture? I initially started with an early known architecture called Single-Image Convolutional Neural Network ([SRCNN](https://arxiv.org/pdf/1501.00092.pdf)). This architecture consists of 2 hidden layers and an output layer that reconstructs the high-resolution image. This architecture, although better than traditional algorithms, fails to reconstruct the image properly. [SRCNN](https://arxiv.org/pdf/1501.00092.pdf) is essentially a glorified image sharpening algorithm. 
+The model architecture is created using a fully convolutional deep residual network. I had pretty good intuition that this type of model would work, as it had on my previous projects for image restoration. I looked into other architectures such as UNET for inpainting but ran into troubles while implementing them.
 
-![alt text](md_images/srcnn.png)
+First, [`UNET`](https://en.wikipedia.org/wiki/U-Net) requires you to splice images during inference, meaning that the image splice had to be larger than the white space that the user is trying to inpaint. For example, if the splices you set up for inference were set up to take 64x64 chunks of the image and you managed to get whitespace that fully engulfed this splice, feeding this into the model would result in improper pixels due to the model not having any reference. This would require a different architecture that would detect the size of the white space for images so that you could adequately select the image splice size.
 
-The next model I tried implementing was Very Deep Super-Resolution ([VDSR](https://arxiv.org/pdf/1511.04587.pdf)). This model improves upon the original SRCNN by adding a global skip connection, thus making upscaling much easier. Essentially, the network doesn't need to reconstruct the image entirely and instead needs to reconstruct the difference (the residual) between the high and low-resolution image.
+The following architecture I looked into and tried implementing was a  [`GAN (Generative Adversarial Network)`](https://en.wikipedia.org/wiki/Generative_adversarial_network) based model. I've experimented with GANs and implemented a model that could generate faces using images from the CelebA dataset; however, using GANs for Inpainting proved a much more complex problem. There are issues that I faced with proper ratios of the loss functions being L1 loss and the adversarial loss of the discriminator. Although a GAN-based model would likely drastically improve the output during inference, I could not tune the hyper-parameters enough to balance both the loss functions and the training of the generator and discriminator.
 
-The following model I implemented was Very Deep Super-Resolution ([VDSR](https://arxiv.org/pdf/1511.04587.pdf)). This model improves the [SRCNN](https://arxiv.org/pdf/1501.00092.pdf) architecture by adding a global skip connection connecting the input and output images.  Essentially, the neural network no longer needs to fully reconstruct a high-resolution image; instead, it only needs to reconstruct the difference (the residual) between a high and low-resolution image. 
+### Model Architecture
 
-My implementation improves upon the concept of residuals within VDSR by combining both global and local connections using an `Add` layer. Since this model is quite deep (50 Convolutional Layers), it takes a long time for the model to predict an image during inference. I created a smaller model that uses `Concatenate` layers to replace the `Add` layers, and although much smaller than the original model, it produces comparable results due to the density of connections inherent to concatenation layers.
-
-### Model Architecture Comparison
-
-| Methods | Depth |      Filters      | Parameters |         SSIM-x2         |          PSNR-x2           | Training Time |
-| ------- | :---: | :---------------: | :--------: | :---------------------: | :------------------------: | :-----------: |
-| Bicubic |   ~   |         ~         |     ~      |         0.9201          |          32.4975           |       ~       |
-| SRCNN   |   3   |      64-32-3      |    20k     |         0.9389          |           36.113           |     6hrs      |
-| VDSR    |  20   | (19 layers) 64-3  |    668k    |         0.9488          |          37.3448           |     8hrs      |
-| Small   |  20   | (19 layers) 64-3  |   2,013k   |         0.9501          |          37.5013           |     15hrs     |
-| Large   |  50   | (49 layers) 128-3 |   7,091k   | <strong>0.9541</strong> | <strong>37.9479  </strong> |     23hrs     |
-
-
-### Architecture Performance
-![alt text](md_images/plot_ssim.png)
+| Methods       | Depth |      Filters      | Parameters | Training Time |
+| ------------- | :---: | :---------------: | :--------: | :-----------: |
+| Inpaint Model |  50   | (49 layers) 192-3 |  15,945k   |    ~30hrs     |
 
 ## Network Architecture:
 
 ## How do you use this model?
-Put low-resolution images to upscale inside the '**inference/original**' directory. Run output.py, and the results will be written into the '**inference/output**' directory. It should take a couple of seconds to run the model for each image inside the input directory. 
-
-If you find that the model takes too long to run, or you run out of memory, try replacing '*weights/LARGE_BEST.h5*' with other models found within the [weights](https://github.com/JoshVEvans/Super-Resolution/tree/master/weights) folder such as '*weights/SMALL_BEST.h5*' or '*weights/VDSR_BEST.h5*'.
+Due to the sheer size of this model, I can't fully upload it onto GitHub. Instead, I have opted to upload it via Google Drive, where you should be able to download it. Place this download '*.h5*' file and place it inside the '**weights/**' directory. 
 
 ## How can you train your own model?
-The model is instantiated within [`network.py`](https://github.com/JoshVEvans/Super-Resolution/blob/master/network.py). You can play around with hyper-parameters there. First, to train the model, delete the images currently within `data/` put your training image data within that file - I recommend the [DIV2K dataset](https://data.vision.ee.ethz.ch/cvl/DIV2K/). Finally, mess with hyper-parameters in [`train.py`](https://github.com/JoshVEvans/Super-Resolution/blob/master/train.py) and run `train.py`. If you’re training on weaker hardware, I’d recommend lowering the `batch_size` below the currently set ***8*** images. Also, decrease the number of (`residual blocks`) from `24 to 9` and reduce the number of filters (`num_filters`) from `128 to 64`.
+The model is instantiated within [`network.py`](https://github.com/JoshVEvans/Image-Inpainting/blob/main/network.py). You can play around with hyper-parameters there. First, to train the model, delete the images currently within `data/` put your training image data within that file - any large dataset such as [`ImageNet`](https://www.image-net.org/) or an equivalent should work. Finally, mess with hyper-parameters in [`train.py`](https://github.com/JoshVEvans/Image-Inpainting/blob/master/train.py) and run `train.py`. If you’re training on weaker hardware, I’d recommend lowering the `batch_size` below the currently set ***4*** images.
 
 ## Qualitative Examples (click on the images for higher quality):
 #### Set 5 Evaluation Set:
@@ -50,8 +36,6 @@ Images Left to Right: Original, Interpolated, Predicted
 ![alt text](evaluation/Combined/baby.png)
 ![alt text](evaluation/Combined/butterfly.png)
 ![alt text](evaluation/Combined/comic.png)
-
-## [Complete Model Architecture:](md_images/model_large.png)
 
 ### Hardware - Training Statistics
 ##### Trained on 3070 ti
