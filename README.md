@@ -3,9 +3,9 @@
 Image inpainting is a restorative process that allows for the fixing or removal of unwanted parts within images. Typically, this process is done by professionals who use software to change the image to remove the imperfection painstakingly. A deep learning approach bypasses manual labor typically used in this process and applies a neural network to determine the proper fill for the parts of the image.
 
 ## Examples
+To see a higher quality version, **[click](https://github.com/JoshVEvans/Super-Resolution/tree/master/evaluation/Combined) on the images**
+##### *From left to right: original, interpolated, predicted*<br />
 ![alt text](evaluation/Combined/000000000029.jpg)
-##### *From left to right: original, interpolated (Nearest Neighbor upscaling), and prediction (from neural network)*<br />
-To see a higher quality version, **[click](https://github.com/JoshVEvans/Super-Resolution/tree/master/evaluation/Combined) on the images**. In some cases, the upscaled image looks even better than the original!
 ![alt text](evaluation/Combined/000000001300.jpg)
 
 ## Reasearch and Development
@@ -14,6 +14,8 @@ The model architecture is created using a fully convolutional deep residual netw
 First, [`UNET`](https://en.wikipedia.org/wiki/U-Net) requires you to splice images during inference, meaning that the image splice had to be larger than the white space that the user is trying to inpaint. For example, if the splices you set up for inference were set up to take 64x64 chunks of the image and you managed to get whitespace that fully engulfed this splice, feeding this into the model would result in improper pixels due to the model not having any reference. This would require a different architecture that would detect the size of the white space for images so that you could adequately select the image splice size.
 
 The following architecture I looked into and tried implementing was a  [`GAN (Generative Adversarial Network)`](https://en.wikipedia.org/wiki/Generative_adversarial_network) based model. I've experimented with GANs and implemented a model that could generate faces using images from the CelebA dataset; however, using GANs for Inpainting proved a much more complex problem. There are issues that I faced with proper ratios of the loss functions being L1 loss and the adversarial loss of the discriminator. Although a GAN-based model would likely drastically improve the output during inference, I could not tune the hyper-parameters enough to balance both the loss functions and the training of the generator and discriminator.
+
+I resolved to use the current architecture described due to its simplicity and relatively adequate results.
 
 ### Model Architecture
 
