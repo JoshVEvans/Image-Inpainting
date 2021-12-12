@@ -1,6 +1,8 @@
 import os
-import cv2
+
+import matplotlib.pyplot as plt
 import numpy as np
+import cv2
 
 
 def evaluate(model, concat=True, summary=True):
@@ -41,9 +43,38 @@ def evaluate(model, concat=True, summary=True):
                 np.concatenate((original, white, input, white, output), axis=1),
             )
 
+            f = plt.figure()
+
+            img1 = f.add_subplot(1, 3, 1)
+            plt.imshow(cv2.cvtColor(np.array(original), cv2.COLOR_BGR2RGB))
+
+            img2 = f.add_subplot(1, 3, 2)
+            plt.imshow(
+                cv2.cvtColor(np.array(input), cv2.COLOR_BGR2RGB),
+            )
+
+            img3 = f.add_subplot(1, 3, 3)
+            output = np.clip(output, 0, 255).astype(np.uint8)
+            plt.imshow(cv2.cvtColor(output, cv2.COLOR_BGR2RGB))
+
+            img1.set_xlabel("original")
+            img1.xaxis.set_ticks([])
+            img1.yaxis.set_ticks([])
+
+            img2.set_xlabel(f"interpolated")
+            img2.xaxis.set_ticks([])
+            img2.yaxis.set_ticks([])
+
+            img3.set_xlabel(f"network / {round(cv2.PSNR(original, output), 2)}dB")
+            img3.xaxis.set_ticks([])
+            img3.yaxis.set_ticks([])
+
+            plt.savefig(f"evaluation/plot/{image_name}", dpi=500, bbox_inches="tight")
+
 
 if __name__ == "__main__":
     import tensorflow as tf
+    from create_sample import main
     from keras.models import load_model
 
     # If uncommented, forces the use of the cpu or gpu
@@ -60,4 +91,5 @@ if __name__ == "__main__":
     tf.compat.v1.keras.backend.set_session(session)
 
     model = load_model("weights/weights.h5")
+    main()
     evaluate(model)

@@ -7,8 +7,8 @@ import cv2
 
 
 # This method returns the batch of images using multiprocessing for faster interpolation
-def load_multiprocessing(multiprocessing_pool, image_paths):
-    batch = multiprocessing_pool.map(get_set, image_paths)
+def load_multiprocessing(multiprocessing_pool, data):
+    batch = multiprocessing_pool.map(get_set, data)
 
     X = []
     y = []
@@ -24,12 +24,12 @@ def load_multiprocessing(multiprocessing_pool, image_paths):
 
 
 # This method returns the batch of images of length batch_size
-def load(image_paths):
+def load(data):
     X = []
     y = []
 
-    for image_path in image_paths:
-        a, b = get_set(image_path)
+    for image_path in data:
+        a, b = get_set(data)
 
         X.append(a)
         y.append(b)
@@ -41,10 +41,11 @@ def load(image_paths):
 
 
 # This method returns a set of X, y images.
-def get_set(image_path):
-    dim = 64
-    # Read Image from Path
-    image = cv2.imread(image_path)
+def get_set(data):
+    dim = 96
+    # Read Image and Mask from Path
+    image = cv2.imread(data[0])
+    mask = np.array(cv2.imread(data[1]))
 
     # Crop / Resize Sample
     temp_dim = image.shape
@@ -71,12 +72,16 @@ def get_set(image_path):
     # Store y
     y = image.copy()
 
+    mask, _, _ = np.array(cv2.split(mask))
+    mask = cv2.resize(mask, (dim, dim))
+    image = cv2.bitwise_or(image, image, mask=mask)
+
     ### Image Interpolation ###
-    x1 = random.randint(0, dim)
-    x2 = random.randint(x1, dim)
-    y1 = random.randint(0, dim)
-    y2 = random.randint(y1, dim)
-    image[x1:x2, y1:y2] = 255
+    # x1 = random.randint(0, dim)
+    # x2 = random.randint(x1, dim)
+    # y1 = random.randint(0, dim)
+    # y2 = random.randint(y1, dim)
+    # image[x1:x2, y1:y2] = 255
 
     # Store X
     X = image

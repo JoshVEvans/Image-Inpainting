@@ -14,7 +14,8 @@ from tqdm import tqdm, trange
 
 def main():
     # Parameters
-    dataset_path = "data/COCO/"
+    dataset_path = "data/ImageNet/Data/"
+    mask_path = "data/masks/"
     batch_size = 8
     epochs = 500
     steps_per_epoch = 1000
@@ -23,6 +24,7 @@ def main():
     ### Training Loop ###
     training(
         dataset_path=dataset_path,
+        mask_path=mask_path,
         batch_size=batch_size,
         epochs=epochs,
         steps_per_epoch=steps_per_epoch,
@@ -30,7 +32,7 @@ def main():
     )
 
 
-def training(dataset_path, batch_size, epochs, steps_per_epoch, workers):
+def training(dataset_path, mask_path, batch_size, epochs, steps_per_epoch, workers):
     # Metrics
     saved_loss = float("inf")
     lr_decay_num = 20
@@ -48,10 +50,22 @@ def training(dataset_path, batch_size, epochs, steps_per_epoch, workers):
         p = mp.Pool(workers)
 
     # Get Image Paths
-    dataset_paths = list(os.listdir(dataset_path))
-    dataset_paths = np.array(
-        [f"{dataset_path}{image_path}" for image_path in dataset_paths]
-    )
+    dataset_paths = []
+    # r=root, d=directories, f = files
+    for root, directories, files in os.walk(dataset_path):
+        for file in files:
+            # if file.endswith(".png"):
+            dataset_paths.append(os.path.join(root, file))
+    dataset_paths = np.array(dataset_paths)
+
+    # Get Mask Paths
+    mask_paths = []
+    # r=root, d=directories, f = files
+    for root, directories, files in os.walk(mask_path):
+        for file in files:
+            # if file.endswith(".png"):
+            mask_paths.append(os.path.join(root, file))
+    mask_paths = np.array(mask_paths)
 
     # Main Loop
     for e in tqdm(range(1, epochs + 1)):
@@ -66,12 +80,20 @@ def training(dataset_path, batch_size, epochs, steps_per_epoch, workers):
             image_paths = dataset_paths[
                 np.random.randint(0, len(dataset_paths), size=(batch_size))
             ]
+            # Get mask_image paths
+            mask_image_paths = mask_paths[
+                np.random.randint(0, len(mask_paths), size=(batch_size))
+            ]
+
+            data = []
+            for i in range(len(image_paths)):
+                data.append((image_paths[i], mask_image_paths[i]))
 
             # Load Images
             if workers != 1:
-                X, y = utils.load_multiprocessing(p, image_paths)
+                X, y = utils.load_multiprocessing(p, data)
             else:
-                X, y = utils.load(image_paths)
+                X, y = utils.load(data)
 
             # Train Model
             metrics = model.train_on_batch(X, y)
